@@ -104,6 +104,48 @@ require("lazy").setup({
     -- 5. JAVA IDE: Soporte avanzado para Java (¡El que faltaba!)
     {
         "mfussenegger/nvim-jdtls",
+    },
+    -- 6. MOTOR DE AUTOCOMPLETADO VISUAL (El menú emergente)
+    {
+        "hrsh7th/nvim-cmp",
+        dependencies = {
+            "hrsh7th/cmp-nvim-lsp", -- Conecta el menú con nuestros motores de Mason
+            "L3MON4D3/LuaSnip",     -- Motor para expandir fragmentos de código (snippets)
+        },
+        config = function()
+            local cmp = require("cmp")
+            local luasnip = require("luasnip")
+
+            cmp.setup({
+                snippet = {
+                    expand = function(args)
+                        luasnip.lsp_expand(args.body)
+                    end,
+                },
+                mapping = cmp.mapping.preset.insert({
+                    ['<C-Space>'] = cmp.mapping.complete(), -- Forzar menú con Ctrl+Espacio
+                    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Intro para aceptar sugerencia
+                    ['<Tab>'] = cmp.mapping(function(fallback)
+                        if cmp.visible() then
+                            cmp.select_next_item() -- Bajar por el menú con Tabulador
+                        else
+                            fallback()
+                        end
+                    end, { 'i', 's' }),
+                    ['<S-Tab>'] = cmp.mapping(function(fallback)
+                        if cmp.visible() then
+                            cmp.select_prev_item() -- Subir por el menú con Shift+Tab
+                        else
+                            fallback()
+                        end
+                    end, { 'i', 's' }),
+                }),
+                sources = cmp.config.sources({
+                    { name = 'nvim_lsp' }, -- Sugerencias inteligentes del motor (Java, Python, etc.)
+                    { name = 'luasnip' },  -- Fragmentos de código
+                })
+            })
+        end
     }
 })
 
