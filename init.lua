@@ -1,0 +1,85 @@
+-- ========================================================================== --
+-- 1. CONFIGURACIÓN BÁSICA (Preferencias de Javi)
+-- ========================================================================== --
+
+-- Activar los números de línea y números relativos para movernos rápido
+vim.opt.number = true
+vim.opt.relativenumber = true
+-- Hola
+-- Configuración de sangría (estilo Java: 4 espacios)
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+
+-- Sincronizar con el portapapeles de macOS (Cmd+C / Cmd+V)
+vim.opt.clipboard = "unnamedplus"
+
+-- Mejorar la experiencia visual
+vim.opt.termguicolors = true
+
+
+-- ========================================================================== --
+-- 2. BOOTSTRAP DE LAZY.NVIM (El instalador automático)
+-- ========================================================================== --
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+
+-- ========================================================================== --
+-- 3. CONFIGURACIÓN DE PLUGINS
+-- ========================================================================== --
+
+require("lazy").setup({
+    -- TEMA VISUAL: TokyoNight (Configuración segura para evitar errores E185)
+    { 
+        "folke/tokyonight.nvim", 
+        lazy = false, 
+        priority = 1000,
+        config = function()
+            vim.cmd.colorscheme("tokyonight")
+        end
+    },
+
+    -- EXPLORADOR DE ARCHIVOS: Nvim-Tree
+    {
+        "nvim-tree/nvim-tree.lua",
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+        config = function()
+            require("nvim-tree").setup()
+        end
+    },
+    -- 3. TREESITTER: Resaltado de sintaxis inteligente
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate", -- Mantiene los analizadores actualizados
+        config = function()
+            require("nvim-treesitter.configs").setup({
+                -- Una lista de lenguajes iniciales para tu arsenal
+                ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "java", "javascript", "python", "html" },
+
+                -- Instalar automáticamente analizadores de nuevos lenguajes al abrir archivos
+                auto_install = true,
+
+                highlight = {
+                    enable = true, -- ¡La magia que enciende los colores inteligentes!
+                    additional_vim_regex_highlighting = false,
+                },
+            })
+        end
+    }
+})
+
+-- ========================================================================== --
+-- FIN DEL ARCHIVO
+-- ========================================================================== --
