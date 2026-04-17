@@ -77,6 +77,33 @@ require("lazy").setup({
                 },
             })
         end
+    },
+    -- 4. EL CEREBRO: LSP (Autocompletado y errores)
+    {
+        "williamboman/mason.nvim",
+        dependencies = {
+            "williamboman/mason-lspconfig.nvim",
+            "neovim/nvim-lspconfig",
+        },
+        config = function()
+            -- 1. Iniciar la App Store
+            require("mason").setup()
+
+            -- 2. Pedirle que instale automáticamente estos lenguajes
+            require("mason-lspconfig").setup({
+                ensure_installed = { "lua_ls", "pyright" }, -- Lua y Python para empezar
+            })
+
+            -- 4. Tus nuevos superpoderes (Atajos de teclado de IDE)
+            -- Pulsar 'K' mayúscula para ver la documentación de lo que tienes bajo el cursor
+            vim.keymap.set('n', 'K', vim.lsp.buf.hover, {})
+            -- Pulsar 'gd' para ir a la definición de una variable o función
+            vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {})
+        end
+    },
+    -- 5. JAVA IDE: Soporte avanzado para Java (¡El que faltaba!)
+    {
+        "mfussenegger/nvim-jdtls",
     }
 })
 
