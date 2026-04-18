@@ -39,9 +39,8 @@ vim.opt.rtp:prepend(lazypath)
 -- ========================================================================== --
 -- 3. CONFIGURACIÓN DE PLUGINS
 -- ========================================================================== --
-
 require("lazy").setup({
-    -- TEMA VISUAL: TokyoNight (Configuración segura para evitar errores E185)
+    -- 1. TEMA VISUAL: TokyoNight
     { 
         "folke/tokyonight.nvim", 
         lazy = false, 
@@ -51,104 +50,85 @@ require("lazy").setup({
         end
     },
 
-    -- EXPLORADOR DE ARCHIVOS: Nvim-Tree
+    -- 2. ESTÉTICA: Barra de estado (Lualine) y Pestañas (Bufferline)
+    {
+        'nvim-lualine/lualine.nvim',
+        dependencies = { 'nvim-tree/nvim-web-devicons' },
+        config = function() require('lualine').setup({ options = { theme = 'tokyonight' } }) end
+    },
+    {
+        'akinsho/bufferline.nvim',
+        version = "*",
+        dependencies = 'nvim-tree/nvim-web-devicons',
+        config = function() require("bufferline").setup({}) end
+    },
+
+    -- 3. EXPLORADOR Y SINTAXIS
     {
         "nvim-tree/nvim-tree.lua",
         dependencies = { "nvim-tree/nvim-web-devicons" },
-        config = function()
-            require("nvim-tree").setup()
-        end
+        config = function() require("nvim-tree").setup() end
     },
-    -- 3. TREESITTER: Resaltado de sintaxis inteligente
     {
         "nvim-treesitter/nvim-treesitter",
-        build = ":TSUpdate", -- Mantiene los analizadores actualizados
+        build = ":TSUpdate",
         config = function()
             require("nvim-treesitter.configs").setup({
-                -- Una lista de lenguajes iniciales para tu arsenal
-                ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "java", "javascript", "python", "html" },
-
-                -- Instalar automáticamente analizadores de nuevos lenguajes al abrir archivos
-                auto_install = true,
-
-                highlight = {
-                    enable = true, -- ¡La magia que enciende los colores inteligentes!
-                    additional_vim_regex_highlighting = false,
-                },
+                ensure_installed = { "lua", "vim", "java", "python" },
+                highlight = { enable = true },
             })
         end
     },
-    -- 4. EL CEREBRO: LSP (Autocompletado y errores)
+
+    -- 4. EL CEREBRO: Mason y LSP
     {
         "williamboman/mason.nvim",
-        dependencies = {
-            "williamboman/mason-lspconfig.nvim",
-            "neovim/nvim-lspconfig",
-        },
+        dependencies = { "williamboman/mason-lspconfig.nvim", "neovim/nvim-lspconfig" },
         config = function()
-            -- 1. Iniciar la App Store
             require("mason").setup()
-
-            -- 2. Pedirle que instale automáticamente estos lenguajes
-            require("mason-lspconfig").setup({
-                ensure_installed = { "lua_ls", "pyright" }, -- Lua y Python para empezar
-            })
-
-            -- 4. Tus nuevos superpoderes (Atajos de teclado de IDE)
-            -- Pulsar 'K' mayúscula para ver la documentación de lo que tienes bajo el cursor
+            require("mason-lspconfig").setup({ ensure_installed = { "lua_ls", "jdtls" } })
             vim.keymap.set('n', 'K', vim.lsp.buf.hover, {})
-            -- Pulsar 'gd' para ir a la definición de una variable o función
             vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {})
         end
     },
-    -- 5. JAVA IDE: Soporte avanzado para Java (¡El que faltaba!)
-    {
-        "mfussenegger/nvim-jdtls",
-    },
-    -- 6. MOTOR DE AUTOCOMPLETADO VISUAL (El menú emergente)
+
+    -- 5. JAVA ESPECIALIZADO
+    { "mfussenegger/nvim-jdtls" },
+
+    -- 6. AUTOCOMPLETADO Y SNIPPETS (Atajos de código)
     {
         "hrsh7th/nvim-cmp",
         dependencies = {
-            "hrsh7th/cmp-nvim-lsp", -- Conecta el menú con nuestros motores de Mason
-            "L3MON4D3/LuaSnip",     -- Motor para expandir fragmentos de código (snippets)
+            "hrsh7th/cmp-nvim-lsp",
+            "L3MON4D3/LuaSnip",
+            "saadparwaiz1/cmp_luasnip",     -- Conecta LuaSnip con el menú
+            "rafamadriz/friendly-snippets", -- El diccionario de atajos (sout, psvm, etc.)
         },
         config = function()
             local cmp = require("cmp")
             local luasnip = require("luasnip")
+            
+            -- Cargar los atajos estilo VSCode (Java, etc.)
+            require("luasnip.loaders.from_vscode").lazy_load()
 
             cmp.setup({
-                snippet = {
-                    expand = function(args)
-                        luasnip.lsp_expand(args.body)
-                    end,
-                },
+                snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
                 mapping = cmp.mapping.preset.insert({
-                    ['<C-Space>'] = cmp.mapping.complete(), -- Forzar menú con Ctrl+Espacio
-                    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Intro para aceptar sugerencia
+                    ['<C-Space>'] = cmp.mapping.complete(),
+                    ['<CR>'] = cmp.mapping.confirm({ select = true }),
                     ['<Tab>'] = cmp.mapping(function(fallback)
-                        if cmp.visible() then
-                            cmp.select_next_item() -- Bajar por el menú con Tabulador
-                        else
-                            fallback()
-                        end
-                    end, { 'i', 's' }),
-                    ['<S-Tab>'] = cmp.mapping(function(fallback)
-                        if cmp.visible() then
-                            cmp.select_prev_item() -- Subir por el menú con Shift+Tab
-                        else
-                            fallback()
-                        end
+                        if cmp.visible() then cmp.select_next_item()
+                        elseif luasnip.expand_or_jumpable() then luasnip.expand_or_jump()
+                        else fallback() end
                     end, { 'i', 's' }),
                 }),
                 sources = cmp.config.sources({
-                    { name = 'nvim_lsp' }, -- Sugerencias inteligentes del motor (Java, Python, etc.)
-                    { name = 'luasnip' },  -- Fragmentos de código
+                    { name = 'nvim_lsp' },
+                    { name = 'luasnip' },
                 })
             })
         end
     }
 })
-
--- ========================================================================== --
 -- FIN DEL ARCHIVO
 -- ========================================================================== --
