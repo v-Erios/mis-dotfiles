@@ -130,5 +130,15 @@ require("lazy").setup({
         end
     }
 })
+
+
+-- ATENCIÓN JAVI: Atajo para ejecutar Java con F5
+vim.keymap.set('n', '<F5>', function()
+  vim.cmd('write') -- Guarda el archivo primero
+  local file = vim.fn.expand('%') -- Coge el nombre del archivo actual
+  -- Abre una terminal pequeña abajo y ejecuta el archivo
+  vim.cmd('split | term java ' .. file) 
+end, { desc = "Run Java file" })
+
 -- FIN DEL ARCHIVO
 -- ========================================================================== --
