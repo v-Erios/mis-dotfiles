@@ -133,12 +133,36 @@ require("lazy").setup({
 
 
 -- ATENCIÓN JAVI: Atajo para ejecutar Java con F5
+-- ========================================================================== --
+-- BOTÓN DE PLAY UNIVERSAL PARA JAVA (Maven)
+-- ========================================================================== --
 vim.keymap.set('n', '<F5>', function()
-  vim.cmd('write') -- Guarda el archivo primero
-  local file = vim.fn.expand('%') -- Coge el nombre del archivo actual
-  -- Abre una terminal pequeña abajo y ejecuta el archivo
-  vim.cmd('split | term java ' .. file) 
-end, { desc = "Run Java file" })
-
+    vim.cmd('write') -- Guardar primero
+    
+    -- 1. Conseguir la ruta completa del archivo que tienes abierto
+    local filepath = vim.fn.expand('%:p')
+    
+    -- 2. Comprobar si estamos dentro de un proyecto Maven estándar
+    if string.match(filepath, "src/main/java/") then
+        -- 3. Extraer la ruta después de 'java/' (ej: com/javi/MiClase)
+        local relative_path = string.match(filepath, "src/main/java/(.*)%.java")
+        
+        -- 4. Cambiar las barras por puntos (ej: com.javi.MiClase)
+        local main_class = string.gsub(relative_path, "/", ".")
+        
+        -- 5. Lanzar Maven con la clase calculada dinámicamente
+        local cmd = 'split | term mvn compile exec:java -Dexec.mainClass="' .. main_class .. '"'
+        vim.cmd(cmd)
+        vim.cmd('startinsert') -- Entrar a la terminal para ver el resultado
+    else
+        -- Si abres un archivo Java suelto que no es de Maven
+        print("Aviso: Este archivo no parece estar en un proyecto Maven (src/main/java/).")
+        vim.cmd('split | term java ' .. filepath)
+        vim.cmd('startinsert')
+    end
+end, { desc = "Ejecutar Java de forma Inteligente" })
+-- Atajo para ejecutar Contructores, getter, setter etc
+   -- Abrir el menú de acciones (Generar getters, setters, constructores, etc.)
+vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, { desc = "Code Actions" })
 -- FIN DEL ARCHIVO
 -- ========================================================================== --
